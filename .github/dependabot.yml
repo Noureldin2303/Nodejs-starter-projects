@@ -1,0 +1,14 @@
+version: 2
+updates:
+  - package-ecosystem: "npm"
+    directory: "/JobAPI"
+    schedule:
+      interval: "daily"
+  - package-ecosystem: "npm"
+    directory: "/Task-Manager"
+    schedule:
+      interval: "daily"
+  - package-ecosystem: "npm"
+    directory: "/storeApi"
+    schedule:
+      interval: "daily"
