@@ -22,10 +22,21 @@ const getTask = asyncWrapper(async (req, res, next) => {
 
 const updateTask = asyncWrapper(async (req, res) => {
   const { id: taskId } = req.params;
-  const updatedTask = await Task.findOneAndUpdate({ _id: taskId }, req.body, {
-    new: true,
-    runValidators: true,
-  });
+  const allowedFields = ['field1', 'field2', 'field3']; // specify allowed fields
+  const updateFields = {};
+  for (const key in req.body) {
+    if (allowedFields.includes(key)) {
+      updateFields[key] = req.body[key];
+    }
+  }
+  const updatedTask = await Task.findOneAndUpdate(
+    { _id: taskId },
+    { $set: updateFields },
+    {
+      new: true,
+      runValidators: true,
+    }
+  );
   if (!updatedTask)
     return next(createCustomError(`No task with that id:${taskId}`, 404));
   res.status(200).json({ updatedTask });
