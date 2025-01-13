@@ -5,7 +5,7 @@ const getAllProducts = async (req, res) => {
   const queryObject = {};
   if (featured) queryObject.featured = featured === "true" ? true : false;
 
-  if (company) queryObject.company = company;
+  if (company) queryObject.company = { $eq: company };
 
   if (name) queryObject.name = { $regex: name, $options: "i" };
 
