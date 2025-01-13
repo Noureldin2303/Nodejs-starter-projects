@@ -1,0 +1,76 @@
+name: Auto Update and Merge Dependencies
+
+on:
+  schedule:
+    - cron: "0 2 * * *" # Runs daily at 2 AM
+  workflow_dispatch: # Allows manual triggering
+
+jobs:
+  update-dependencies:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Step 1: Check out the repository
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      # Step 2: Set up Node.js environment
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: "lts/*" # Use the latest LTS version
+          cache: "npm" # Cache npm dependencies
+
+      # Step 3: Install current dependencies
+      - name: Install Dependencies
+        run: npm ci
+
+      # Step 4: Update dependencies
+      - name: Update Dependencies
+        run: npm update
+
+      # Step 5: Run tests to ensure changes are safe
+      - name: Run Tests
+        run: npm test
+
+      # Step 6: Commit changes and push to a new branch
+      - name: Commit Changes
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout -b auto-update-dependencies
+          git add package.json package-lock.json
+          git commit -m "chore: auto-update dependencies" || echo "No changes to commit"
+          git push -u origin auto-update-dependencies
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  auto-merge:
+    needs: update-dependencies
+    runs-on: ubuntu-latest
+    if: success() # Only run if the `update-dependencies` job passes
+
+    steps:
+      # Step 1: Checkout the repository
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      # Step 2: Create Pull Request
+      - name: Create Pull Request
+        uses: peter-evans/create-pull-request@v5
+        with:
+          branch: auto-update-dependencies
+          title: "chore: auto-update dependencies"
+          body: "This PR updates dependencies to the latest versions."
+          labels: "dependencies, automation"
+          draft: false # Set to `true` if you want the PR to be a draft
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # Step 3: Auto-Merge Pull Request
+      - name: Auto-Merge Pull Request
+        uses: ahmadnassri/action-auto-merge-dependabot@v2
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          target: "main"
+          merge-method: "squash" # Options: merge, squash, rebase
