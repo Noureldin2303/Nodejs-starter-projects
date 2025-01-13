@@ -22,7 +22,13 @@ const getTask = asyncWrapper(async (req, res, next) => {
 
 const updateTask = asyncWrapper(async (req, res) => {
   const { id: taskId } = req.params;
-  const updateFields = req.body;
+  const allowedFields = ['field1', 'field2', 'field3']; // specify allowed fields
+  const updateFields = {};
+  for (const key in req.body) {
+    if (allowedFields.includes(key)) {
+      updateFields[key] = req.body[key];
+    }
+  }
   const updatedTask = await Task.findOneAndUpdate(
     { _id: taskId },
     { $set: updateFields },
